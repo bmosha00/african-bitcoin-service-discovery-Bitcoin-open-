@@ -68,21 +68,21 @@ const publisher = new Publisher({ privateKey: process.env.NOSTR_PRIVATE_KEY });
 
 await publisher.publish({
   // Required
-  id:        'chapsmart-tz-offramp',          // unique, stable service ID
-  name:      'ChapSmart',
+  id:        'provider-a-tz-offramp',         // unique, stable service ID
+  name:      'Provider A',
   country:   'TZ',                            // ISO 3166-1 alpha-2
   direction: 'off-ramp',                      // off-ramp | on-ramp | both
   rail_in:   'lightning',                     // lightning | on-chain | ecash
   rail_out:  'm-pesa',                        // m-pesa | mtn-momo | airtel-money | bank | cash
   currency:  'TZS',                           // ISO 4217
-  endpoint:  'https://api.chapsmart.com',
-  health:    'https://api.chapsmart.com/health',
+  endpoint:  'https://api.example.com',
+  health:    'https://api.example.com/health',
 
   // Optional — recommended
   network:   'vodacom-tz',
   min_amount: '2500',
   max_amount: '1000000',
-  fee_range: '1.3-2.2',                       // a range, not exact fees
+  fee_range: '1.5-2.2',                       // a range, not exact fees
   speed:     'seconds',                       // seconds | minutes | hours
   protocols: 'bolt11,nwc,lnurl',
   kyc:       'none'                           // none | light | full
