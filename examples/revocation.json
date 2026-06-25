@@ -1,0 +1,29 @@
+{
+  "kind": 38385,
+  "pubkey": "npub1examplealliance...",
+  "created_at": 1718640000,
+  "tags": [
+    [
+      "d",
+      "revoke-provider-x"
+    ],
+    [
+      "p",
+      "npub1examplebadprovider..."
+    ],
+    [
+      "action",
+      "revoked"
+    ],
+    [
+      "reason",
+      "Non-delivery of mobile money payouts after 3 confirmed complaints"
+    ],
+    [
+      "effective",
+      "2026-09-15"
+    ]
+  ],
+  "content": "",
+  "sig": "hex_signature..."
+}

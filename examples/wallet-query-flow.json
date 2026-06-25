@@ -1,0 +1,46 @@
+{
+  "_comment": "Step 1: Find Tanzania M-Pesa off-ramp providers",
+  "discovery_query": {
+    "kinds": [
+      38383
+    ],
+    "#country": [
+      "TZ"
+    ],
+    "#direction": [
+      "off-ramp"
+    ],
+    "#rail_out": [
+      "m-pesa"
+    ],
+    "since": 1718550000
+  },
+  "_comment2": "Step 2: Fetch attestations for a discovered provider",
+  "attestation_query": {
+    "kinds": [
+      38384
+    ],
+    "#p": [
+      "npub1exampleprovidera..."
+    ]
+  },
+  "_comment3": "Step 3: Check for revocations",
+  "revocation_query": {
+    "kinds": [
+      38385
+    ],
+    "#p": [
+      "npub1exampleprovidera..."
+    ]
+  },
+  "_comment4": "Step 4: Ping health endpoint",
+  "health_check": "GET https://api.example.com/health",
+  "expected_response": {
+    "status": "active",
+    "uptime_24h": "99.2%",
+    "avg_speed_seconds": 12,
+    "capacity": "available",
+    "last_transaction": "2m ago",
+    "version": "1.0.0"
+  }
+}

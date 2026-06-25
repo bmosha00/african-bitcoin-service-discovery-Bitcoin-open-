@@ -1,0 +1,85 @@
+{
+  "kind": 38383,
+  "pubkey": "npub1exampleprovider...",
+  "created_at": 1718640000,
+  "tags": [
+    [
+      "d",
+      "provider-a-tz-offramp"
+    ],
+    [
+      "name",
+      "Provider A"
+    ],
+    [
+      "country",
+      "TZ"
+    ],
+    [
+      "direction",
+      "off-ramp"
+    ],
+    [
+      "rail_in",
+      "lightning"
+    ],
+    [
+      "rail_out",
+      "m-pesa"
+    ],
+    [
+      "currency",
+      "TZS"
+    ],
+    [
+      "network",
+      "vodacom-tz"
+    ],
+    [
+      "min_amount",
+      "2500"
+    ],
+    [
+      "max_amount",
+      "1000000"
+    ],
+    [
+      "fee_range",
+      "1.5-2.2"
+    ],
+    [
+      "speed",
+      "seconds"
+    ],
+    [
+      "endpoint",
+      "https://api.example.com"
+    ],
+    [
+      "health",
+      "https://api.example.com/health"
+    ],
+    [
+      "ttl",
+      "90000"
+    ],
+    [
+      "protocols",
+      "bolt11,nwc,lnurl"
+    ],
+    [
+      "kyc",
+      "none"
+    ],
+    [
+      "status",
+      "active"
+    ],
+    [
+      "heartbeat",
+      "daily"
+    ]
+  ],
+  "content": "{}",
+  "sig": "hex_signature..."
+}

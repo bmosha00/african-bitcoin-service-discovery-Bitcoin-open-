@@ -1,0 +1,33 @@
+{
+  "kind": 38384,
+  "pubkey": "npub1exampleproviderb...",
+  "created_at": 1718640000,
+  "tags": [
+    [
+      "d",
+      "provider-b-vouches-provider-a"
+    ],
+    [
+      "p",
+      "npub1exampleprovidera..."
+    ],
+    [
+      "rating",
+      "reliable"
+    ],
+    [
+      "since",
+      "2026-01"
+    ],
+    [
+      "volume",
+      "medium"
+    ],
+    [
+      "note",
+      "Processed cross-border flows reliably since January 2026"
+    ]
+  ],
+  "content": "",
+  "sig": "hex_signature..."
+}

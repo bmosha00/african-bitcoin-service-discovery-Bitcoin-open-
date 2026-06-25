@@ -1,0 +1,28 @@
+{
+  "name": "afri-bitcoin-discovery",
+  "version": "0.1.0",
+  "description": "Open protocol for discovering Bitcoin payment services across Africa. Publish, discover, and attest providers on Nostr.",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node test/run.js",
+    "example:keygen": "node examples/generate-keys.js",
+    "example:publish": "node examples/publish-listing.js",
+    "example:query": "node examples/query-providers.js",
+    "example:attest": "node examples/publish-attestation.js"
+  },
+  "keywords": ["bitcoin", "africa", "nostr", "lightning", "mpesa", "mobile-money", "service-discovery", "payments"],
+  "author": "Africa Bitcoin Payment Alliance",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bmosha00/african-bitcoin-service-discovery-Bitcoin-open-.git"
+  },
+  "dependencies": {
+    "nostr-tools": "^2.23.8",
+    "@noble/hashes": "^1.7.2",
+    "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

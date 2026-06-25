@@ -1,0 +1,92 @@
+{
+  "_scenario": "Provider A (TZ) needs to route a payment to Kenya",
+  "_description": "User in Tanzania wants to send money to M-Pesa Kenya. Provider A handles the TZ side but queries the directory to find a Kenyan provider.",
+  "step_1_discovery": {
+    "_action": "Provider A queries for a Kenya M-Pesa off-ramp",
+    "filter": {
+      "kinds": [
+        38383
+      ],
+      "#country": [
+        "KE"
+      ],
+      "#direction": [
+        "off-ramp"
+      ],
+      "#rail_out": [
+        "m-pesa"
+      ],
+      "since": 1718550000
+    }
+  },
+  "step_2_result": {
+    "_action": "Relay returns Provider B as a matching provider",
+    "provider": "Provider B",
+    "country": "KE",
+    "rail_out": "m-pesa",
+    "network": "safaricom-ke",
+    "endpoint": "https://api.providerb.example.com",
+    "status": "active"
+  },
+  "step_3_attestation_check": {
+    "_action": "Provider A checks attestations for Provider B",
+    "filter": {
+      "kinds": [
+        38384
+      ],
+      "#p": [
+        "npub1exampleproviderb..."
+      ]
+    },
+    "result": {
+      "attestation_count": 5,
+      "trust_score": 8,
+      "attested_by": [
+        "Alliance (+3)",
+        "Provider C (+1)",
+        "Provider D (+1)",
+        "Provider E (+1)",
+        "Provider F (+1)"
+      ]
+    }
+  },
+  "step_4_health_check": {
+    "_action": "Provider A pings Provider B's health endpoint",
+    "request": "GET https://api.providerb.example.com/health",
+    "response": {
+      "status": "active",
+      "capacity": "available",
+      "avg_speed_seconds": 8
+    }
+  },
+  "step_5_settlement": {
+    "_action": "Provider A calls Provider B's settlement API to execute the Kenyan leg",
+    "request": {
+      "method": "POST",
+      "url": "https://api.providerb.example.com/v1/quote",
+      "body": {
+        "direction": "off-ramp",
+        "rail_in": "lightning",
+        "rail_out": "m-pesa",
+        "amount_sats": 50000,
+        "recipient": {
+          "phone": "+254712345678",
+          "network": "safaricom-ke"
+        }
+      }
+    },
+    "response": {
+      "quote_id": "q_xyz789",
+      "amount_fiat": "9500",
+      "currency": "KES",
+      "fee_fiat": "190",
+      "invoice": "lnbc500u1p...",
+      "ttl_seconds": 300
+    }
+  },
+  "step_6_complete": {
+    "_action": "Provider A pays Provider B's Lightning invoice, Provider B delivers KES to recipient",
+    "status": "completed",
+    "flow": "User (TZ) → Provider A → Lightning → Provider B → M-Pesa Kenya → Recipient"
+  }
+}
