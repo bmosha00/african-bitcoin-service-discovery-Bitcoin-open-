@@ -241,7 +241,11 @@ const score = await attestation.score(providerPubkey);
 
 ## Build Plan — 5 Steps
 
-### Step 1: Setup & Keys ✅ DONE
+### Current Status: 3 of 5 steps complete
+
+The publish-and-discover loop is working end to end. A provider can publish a service listing to three public Nostr relays, and any wallet or provider can discover it by querying those relays. The core protocol is functional. What remains is the trust layer (attestations) and packaging.
+
+### Step 1: Setup & Keys ✅ COMPLETE
 
 What was built:
 - `lib/src/config.js` — Event kinds (38383, 38384, 38385), three public relays (relay.damus.io, relay.nostr.band, nos.lol), trust weights, WebSocket polyfill for Node.js
@@ -249,33 +253,49 @@ What was built:
 - `lib/examples/generate-keys.js` — CLI tool to generate a provider identity
 - `lib/package.json` — npm package configuration with dependencies (nostr-tools, ws)
 
-Status: Tested and working. Ready to push to GitHub.
+Status: Tested and pushed to GitHub.
 
-### Step 2: Publisher
+### Step 2: Publisher ✅ COMPLETE
 
-What will be built:
+What was built:
 - `lib/src/publisher.js` — The Publisher class
 - Builds service listing events (kind 38383) from a simple config object
-- Signs events with the provider's Nostr private key
+- Signs events with the provider's Nostr private key via `finalizeEvent()`
 - Publishes to all three public relays via nostr-tools SimplePool
-- Supports two modes: daily keepalive (cron) and on-change (call when config changes)
+- Validates required fields, uppercases country/currency codes automatically
+- Returns per-relay success/failure results
 - `lib/examples/publish-listing.js` — Working example that publishes a test listing
 
-After this step: Any provider can publish their service to the discovery network with ~10 lines of code.
+Live test result: Published successfully to all three relays (relay.damus.io ✓, relay.nostr.band ✓, nos.lol ✓). First service listing is live on Nostr — queryable by anyone on the planet.
 
-### Step 3: Querier
+Status: Tested live and pushed to GitHub.
 
-What will be built:
+### Step 3: Querier ✅ COMPLETE
+
+What was built:
 - `lib/src/querier.js` — The Querier class
-- Queries relays with filters (country, direction, rail_out, currency)
-- Parses raw Nostr events into clean, usable objects
-- Includes `checkHealth(url)` function that pings a provider's /health endpoint
-- Returns results sorted by freshness
-- `lib/examples/query-providers.js` — Working example that searches for providers
+- `find(filters)` — Main query method with country, direction, rail_in, rail_out, currency filters
+- `findByCountry(country)` — Shorthand for country-only queries
+- `findOffRamp(country, railOut)` — Shorthand for off-ramp queries
+- `findOnRamp(country)` — Shorthand for on-ramp queries
+- `checkHealth(url)` — Pings a provider's /health endpoint, returns structured data or null
+- `findHealthy(filters)` — Combines discovery + health check, returns only live providers
+- Deduplicates results by service ID (keeps most recent)
+- `lib/examples/query-providers.js` — Working example with CLI args (`node query-providers.js TZ m-pesa`)
 
-After this step: Any wallet or provider can discover services across Africa.
+Live test result: Successfully discovered the published Provider A listing from all three relays.
 
-### Step 4: Attestation
+**Important lessons learned during implementation:**
+
+1. **Relays don't index custom tag names.** Public Nostr relays only index single-letter tags (#p, #e, #d, #t). Our multi-character tags (#country, #direction, #rail_out) are stored but NOT searchable server-side. The fix: query by kind only, then filter client-side. This works fine at our scale (dozens of providers) but may need revisiting at hundreds.
+
+2. **Kind 38383 is already in use** by another protocol (P2P trading — NIP-69 Mostro). There are ~667 events of this kind on public relays, mostly from other projects. Our events are distinguishable by the presence of `name` and `country` tags. For production, we should either register a new kind number via a formal NIP, or use the `d` tag prefix convention to namespace our events.
+
+3. **Client-side filtering approach:** The querier fetches all kind 38383 events, skips those without our expected tags (filtering out Mostro and other protocols), then applies country/direction/rail filters in JavaScript. This adds latency at large scale but is the correct approach for public relays that don't support custom tag indexing.
+
+Status: Tested live and pushed to GitHub.
+
+### Step 4: Attestation ⬜ NEXT
 
 What will be built:
 - `lib/src/attestation.js` — The Attestation class
@@ -287,7 +307,7 @@ What will be built:
 
 After this step: The trust layer is functional. Providers can vouch for each other.
 
-### Step 5: Index, Testing & Examples
+### Step 5: Index, Testing & Examples ⬜ PENDING
 
 What will be built:
 - `lib/src/index.js` — Clean exports: `{ Publisher, Querier, Attestation, generateKeys, loadKeys, KINDS, DEFAULT_RELAYS }`
@@ -318,11 +338,9 @@ african-bitcoin-service-discovery-Bitcoin-open-/
 │   └── settlement-api.md            # v0.2 draft — standard /quote /execute /status API
 │
 ├── docs/                             # Supporting documents
-│   ├── developer-guide.md            # Step-by-step implementation guide for backend devs
+│   ├── PROJECT_BLUEPRINT.md          # This document — full project overview
 │   ├── risks-and-mitigations.md      # 5 known risks with proposed solutions
-│   ├── implementation-roadmap.md     # 4-phase build plan for the alliance
-│   ├── Service_Discovery_Protocol.docx    # Full architecture specification
-│   └── Service_Discovery_Addendum.docx    # Addendum addressing 5 architectural risks
+│   └── implementation-roadmap.md     # 4-phase build plan for the alliance
 │
 ├── examples/                         # JSON examples
 │   ├── service-listing.json          # Example kind 38383 event
@@ -335,16 +353,16 @@ african-bitcoin-service-discovery-Bitcoin-open-/
     ├── package.json                  # Package config and dependencies
     ├── .gitignore                    # node_modules, .env
     ├── src/
-    │   ├── index.js                  # Main exports (Step 5)
-    │   ├── config.js                 # Event kinds, relays, trust weights (Step 1) ✅
-    │   ├── keys.js                   # Key generation and loading (Step 1) ✅
-    │   ├── publisher.js              # Publish service listings (Step 2)
-    │   ├── querier.js                # Discover providers (Step 3)
-    │   └── attestation.js            # Trust layer (Step 4)
+    │   ├── config.js                 # Event kinds, relays, trust weights ✅
+    │   ├── keys.js                   # Key generation and loading ✅
+    │   ├── publisher.js              # Publish service listings ✅
+    │   ├── querier.js                # Discover providers (client-side filtering) ✅
+    │   ├── attestation.js            # Trust layer (Step 4 — next)
+    │   └── index.js                  # Main exports (Step 5)
     └── examples/
-        ├── generate-keys.js          # Create a provider identity (Step 1) ✅
-        ├── publish-listing.js        # Publish a test listing (Step 2)
-        ├── query-providers.js        # Search for providers (Step 3)
+        ├── generate-keys.js          # Create a provider identity ✅
+        ├── publish-listing.js        # Publish a test listing ✅
+        ├── query-providers.js        # Search for providers ✅
         └── publish-attestation.js    # Vouch for a partner (Step 4)
 ```
 
@@ -376,7 +394,7 @@ No mechanism to flag bad providers who take payment but don't deliver.
 
 ## Origin
 
-This protocol was proposed at the first Africa Bitcoin Payment Retreat in Naivasha, Kenya (June 13–15, 2026), supported by the Human Rights Foundation (HRF).
+This protocol was proposed at the first Africa Bitcoin Payment Retreat in Naivasha, Kenya (June 13–15, 2026), hosted by Minmo and supported by the Human Rights Foundation (HRF).
 
 The retreat brought together builders from across the continent to address shared challenges in scaling Bitcoin payments in Africa. Service discovery and interoperability emerged from Block 3 (Open Rails & Interoperability) as a concrete initiative the alliance committed to building.
 
@@ -393,6 +411,24 @@ The protocol is open infrastructure. It belongs to no single company. It is desi
 **The Africa Bitcoin Payment Alliance** — Coordinates development, operates reference infrastructure, provides the bootstrap trust anchor, handles dispute resolution.
 
 **Anyone building on Bitcoin in Africa** — The protocol is permissionless. If you can publish a Nostr event, you can participate.
+
+---
+
+## Technical Notes from Implementation
+
+These are important findings from building and testing the protocol against live Nostr relays.
+
+### Relay tag indexing limitation
+Public Nostr relays (relay.damus.io, relay.nostr.band, nos.lol) only index single-letter tags for server-side filtering. Multi-character tags like `country`, `direction`, `rail_out` are stored correctly but cannot be used in REQ filters. The current workaround is client-side filtering: fetch all events of the target kind, then filter in JavaScript. This works at our current scale. For production at hundreds of providers, options include using single-letter tags with a namespace prefix, or operating alliance relays with custom indexing.
+
+### Kind 38383 collision
+Kind 38383 is already used by NIP-69 (Mostro P2P trading). There are ~667 events of this kind on public relays from other projects. Our events are distinguishable by the presence of `name` and `country` tags, which Mostro events don't have. For production, we should register a dedicated kind number via a formal NIP submission, or use a kind in the 30000-39999 addressable range with a unique `d` tag prefix.
+
+### Provider identity
+Each provider generates a Nostr keypair. The public key becomes the provider's permanent identity on the discovery network. The private key signs all events. Losing the private key means losing control of the listing. Providers should store the private key in environment variables, never in code.
+
+### Live test results
+First successful publish-and-discover cycle completed June 25, 2026. A service listing was published to three public relays and successfully queried back, confirming the core protocol loop works end to end.
 
 ---
 
