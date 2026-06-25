@@ -54,7 +54,6 @@ export interface ServiceListing {
   ttl?: string | number;
   protocols?: string;
   kyc?: Kyc;
-  heartbeat?: 'daily' | 'hourly' | 'on-change';
   metadata?: Record<string, unknown>;
 }
 
@@ -83,7 +82,6 @@ export interface Provider {
   ttl: string | null;
   protocols: string[];
   kyc: Kyc | null;
-  heartbeat: string | null;
   metadata: Record<string, unknown>;
   healthData?: HealthData;
 }

@@ -79,16 +79,20 @@ Comma-separated: `bolt11`, `bolt12`, `nwc`, `lnurl`, `webln`, `keysend`
 #### `kyc` — KYC requirements
 `none`, `light` (phone number), `full` (government ID)
 
-#### `heartbeat` — Refresh strategy
-`daily`, `hourly`, `on-change`
+> **Liveness has no heartbeat tag.** Providers SHOULD republish only on change (fee, status, rail, endpoint). `ttl` bounds how long a listing is considered fresh; the `/health` endpoint is the real-time liveness signal. There is no fixed-interval heartbeat — it would waste relay bandwidth without improving liveness.
 
 ## Content field
 
-| Kind | `content` |
-|------|-----------|
-| 38383 (listing) | JSON object of extended metadata (e.g. `description`, `website`, `support`), or `{}` if none |
-| 38384 (attestation) | empty string `""` |
-| 38385 (revocation) | empty string `""` |
+`content` for kind 38383 is a JSON object of optional extended metadata. All keys are optional; unknown keys SHOULD be preserved by consumers but MAY be ignored. Use `{}` when there is nothing to add.
+
+| Key | Type | Meaning |
+|-----|------|---------|
+| `description` | string | Human-readable service description |
+| `website` | string | Provider homepage (https URL) |
+| `support` | string | Support contact (email, https URL, or `nostr:` npub) |
+| `logo` | string | Logo URL (https; square, ≤512px recommended) |
+
+Kinds 38384 (attestation) and 38385 (revocation) use an empty `content` string `""`.
 
 ## Attestation tags (kind 38384)
 

@@ -46,6 +46,11 @@
   .herostats{display:flex;flex-wrap:wrap;gap:26px;margin-top:26px;font-family:var(--mono)}
   .stat .n{font-size:26px;font-weight:700;color:var(--text)} .stat .l{font-size:12px;color:var(--faint);letter-spacing:.04em}
   .credit{margin-top:24px;font-size:13px;color:var(--faint)}
+  .rdot{width:11px;height:11px;border-radius:50%;background:var(--faint);transition:.2s;cursor:help}
+  .rdot.all{background:var(--good);box-shadow:0 0 9px var(--good)}
+  .rdot.some{background:var(--warn);box-shadow:0 0 9px var(--warn)}
+  .rdot.none{background:var(--bad);box-shadow:0 0 9px var(--bad)}
+  .rdot.checking{background:var(--muted);animation:pulse 1.4s infinite}
   .credit a{color:var(--muted);text-decoration:none;border-bottom:1px dotted var(--line)}
   .credit a:hover{color:var(--signal)}
 
@@ -163,7 +168,7 @@
   <div class="herostats" id="heroStats">
     <div class="stat"><div class="n" id="hsProviders">—</div><div class="l">PROVIDERS</div></div>
     <div class="stat"><div class="n" id="hsCountries">—</div><div class="l">COUNTRIES</div></div>
-    <div class="stat"><div class="n" id="hsRelays">—</div><div class="l">RELAYS</div></div>
+    <div class="stat"><div class="n" id="hsRelays" style="display:flex;align-items:center;gap:9px"><span class="rdot" id="rdot" title=""></span><span id="rcount">—</span></div><div class="l">RELAYS LIVE</div></div>
     <div class="stat"><div class="n mono" style="color:var(--signal)">v0.2</div><div class="l">SCHEMA</div></div>
   </div>
   <div class="credit">Vibed with <a id="shakespeare" href="#" target="_blank" rel="noopener">Shakespeare</a> · open protocol, MIT licensed</div>
@@ -249,7 +254,7 @@
 <div id="toast"></div>
 
 <script type="module">
-import * as NT from 'https://esm.sh/nostr-tools@2.10.4';
+import * as NT from 'https://esm.sh/nostr-tools@2.23.8';
 
 /* ---- protocol constants (must match lib v0.2) ---- */
 const REPO = 'https://github.com/bmosha00/african-bitcoin-service-discovery-Bitcoin-open-';
@@ -272,6 +277,33 @@ $('#repoLink').href = REPO; $('#footRepo').href = REPO; $('#shakespeare').href =
 
 /* ---- relay helpers ---- */
 async function q(filter){ try{ return await pool.querySync(RELAYS, filter); }catch(e){ console.warn(e); return []; } }
+
+/* ---- relay connection status (E) ---- */
+let RELAY_STATE = RELAYS.map(u=>({url:u, ok:null}));
+function pingRelay(url){
+  return new Promise(resolve=>{
+    let done=false; let ws;
+    const finish=v=>{ if(done)return; done=true; try{ws&&ws.close()}catch{}; resolve(v); };
+    const t=setTimeout(()=>finish(false), 5000);
+    try{ ws=new WebSocket(url); ws.onopen=()=>{clearTimeout(t);finish(true);}; ws.onerror=()=>{clearTimeout(t);finish(false);}; }
+    catch{ clearTimeout(t); finish(false); }
+  });
+}
+async function checkRelays(){
+  renderRelayStatus('checking');
+  RELAY_STATE = await Promise.all(RELAYS.map(async u=>({url:u, ok:await pingRelay(u)})));
+  renderRelayStatus();
+  return RELAY_STATE;
+}
+function relaysUp(){ return RELAY_STATE.filter(r=>r.ok).length; }
+function renderRelayStatus(state){
+  const up = state==='checking' ? null : relaysUp();
+  const dot=$('#rdot'), count=$('#rcount');
+  if(state==='checking'){ dot.className='rdot checking'; count.textContent='…'; dot.title='Checking relays…'; return; }
+  count.textContent = `${up}/${RELAYS.length}`;
+  dot.className = 'rdot '+(up===RELAYS.length?'all':up>0?'some':'none');
+  dot.title = RELAY_STATE.map(r=>`${r.ok?'● up':'○ down'}  ${r.url.replace('wss://','')}`).join('\n');
+}
 
 function parseListing(ev){
   const t = tagsOf(ev);
@@ -378,8 +410,12 @@ async function runDiscover(){
   CURRENT = list;
   $('#resCount').textContent = list.length ? `${list.length} provider${list.length>1?'s':''}` : 'No providers';
   if(!list.length){
-    res.innerHTML = `<div class="empty panel" style="grid-column:1/-1"><div class="big">Nothing here yet</div>
-      No listings match this filter on the connected relays. Try “Any”, or publish the first one.</div>`;
+    const down = relaysUp()===0;
+    res.innerHTML = down
+      ? `<div class="empty panel" style="grid-column:1/-1"><div class="big">Can't reach any relays</div>
+         None of the ${RELAYS.length} configured relays responded. Check your connection, or the relays may be down. <span class="mono faint">${esc(RELAYS.join('  '))}</span></div>`
+      : `<div class="empty panel" style="grid-column:1/-1"><div class="big">Nothing here yet</div>
+         No listings match this filter on the connected relays. Try “Any”, or publish the first one.</div>`;
     return;
   }
   res.innerHTML = list.map((p,i)=>cardHTML(p,i)).join('');
@@ -568,7 +604,7 @@ $('#publishBtn').addEventListener('click',doPublish);
 
 /* ---- boot ---- */
 async function boot(){
-  $('#hsRelays').textContent = RELAYS.length;
+  checkRelays(); // async, updates the hero dot when done
   const all = await refreshKnown();
   // populate country dropdown from live data + known set
   const ccs = [...new Set(all.map(p=>p.country).filter(Boolean))].sort();

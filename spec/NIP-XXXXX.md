@@ -47,9 +47,8 @@ The five filterable fields use single-letter tags so relays index them for serve
 | `ttl` | Seconds until stale | `90000` (25 hours) |
 | `protocols` | Supported Lightning protocols | `bolt11,nwc,lnurl` |
 | `kyc` | KYC requirement level | `none` / `light` / `full` |
-| `heartbeat` | Refresh strategy | `daily` / `hourly` / `on-change` |
 
-**Liveness:** Providers SHOULD re-publish at least once every 24 hours. Consumers SHOULD treat listings older than the TTL as stale.
+**Liveness:** Providers SHOULD republish only on change (fee, status, rail, endpoint). Consumers SHOULD treat listings older than `ttl` as stale and use the `/health` endpoint as the real-time liveness signal. There is no fixed-interval heartbeat: replaceable events plus a health endpoint make periodic re-publishing redundant.
 
 ### Kind 38384: Attestation
 
@@ -101,7 +100,17 @@ The relay performs the AND match server-side, so the consumer does not download 
 
 ## Content field
 
-Kind 38383 carries optional extended metadata as a JSON object in `content` (e.g. `description`, `website`, `support`), or `{}` if none. Kinds 38384 and 38385 use an empty `content` string.
+Kind 38383 carries optional extended metadata as a JSON object in `content` (see the data-model reference for the key schema: `description`, `website`, `support`, `logo` — all optional, unknown keys preserved), or `{}` if none. Kinds 38384 and 38385 use an empty `content` string.
+
+## Versioning
+
+Every event carries a `v` tag.
+
+- `v: "0.2"` — current schema (single-letter filter tags `c/o/i/m/f`, `alt`, hex `p` tags).
+- **Missing `v` tag** — treat as `0.1`, the original draft that used multi-letter filter tags (`country`, `direction`, `rail_out`, …). 0.1 is deprecated; the reference library no longer emits or filters it.
+- **Unknown `v`** (newer than the client understands) — the client SHOULD show a warning, still render the listing using the tags it recognises, and MUST NOT crash on unexpected tags.
+
+Clients reject nothing solely on version; they degrade gracefully and surface uncertainty to the user.
 
 ## Provider-to-provider routing
 
