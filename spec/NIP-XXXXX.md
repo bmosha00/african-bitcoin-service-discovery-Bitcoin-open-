@@ -144,6 +144,16 @@ Only recognised keys move the score in either direction; unknown keys carry no w
 
 Fee ranges not exact fees. Amount ranges not real-time liquidity. No transaction volume in listings. Health endpoint returns capacity levels not dollar amounts.
 
+## Security considerations
+
+All listing, attestation, and revocation events come from untrusted publishers. Consumers MUST:
+
+- **Verify every event signature** before trusting `pubkey` as an identity. The trust score depends on it.
+- **Treat all free-text fields as untrusted** — `name`, `note`, `reason`, and any `content` metadata. Escape them before rendering in a UI to avoid injection (e.g. stored XSS in a web client).
+- **Validate `health`/`endpoint` URLs before fetching.** They are attacker-controlled; a naive fetch enables SSRF. Require https and reject private/reserved addresses (loopback, RFC 1918, link-local/metadata `169.254.0.0/16`, and the IPv6 equivalents including IPv4-mapped/NAT64/6to4 forms). Cap response size and bound concurrency.
+
+The reference library (`lib/`) implements all three.
+
 ## Settlement
 
 Settlement is explicitly out of scope. A standard settlement API is planned for a future NIP.

@@ -10,7 +10,16 @@
     "example:query": "node examples/query-providers.js",
     "example:attest": "node examples/publish-attestation.js"
   },
-  "keywords": ["bitcoin", "africa", "nostr", "lightning", "mpesa", "mobile-money", "service-discovery", "payments"],
+  "keywords": [
+    "bitcoin",
+    "africa",
+    "nostr",
+    "lightning",
+    "mpesa",
+    "mobile-money",
+    "service-discovery",
+    "payments"
+  ],
   "author": "Africa Bitcoin Payment Alliance",
   "license": "MIT",
   "repository": {
@@ -24,5 +33,6 @@
   },
   "engines": {
     "node": ">=18.0.0"
-  }
+  },
+  "types": "src/index.d.ts"
 }
