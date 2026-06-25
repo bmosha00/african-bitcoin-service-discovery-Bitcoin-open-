@@ -1,33 +1,17 @@
 {
   "kind": 38384,
-  "pubkey": "npub1exampleproviderb...",
+  "pubkey": "7e7e9c9d1f2a3b4c5d6e7f80910a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c",
   "created_at": 1718640000,
   "tags": [
-    [
-      "d",
-      "provider-b-vouches-provider-a"
-    ],
-    [
-      "p",
-      "npub1exampleprovidera..."
-    ],
-    [
-      "rating",
-      "reliable"
-    ],
-    [
-      "since",
-      "2026-01"
-    ],
-    [
-      "volume",
-      "medium"
-    ],
-    [
-      "note",
-      "Processed cross-border flows reliably since January 2026"
-    ]
+    ["d", "vouch-3bf0c63fcb934634"],
+    ["alt", "African Bitcoin provider attestation (vouch)"],
+    ["v", "0.2"],
+    ["p", "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d"],
+    ["rating", "reliable"],
+    ["since", "2026-01"],
+    ["volume", "medium"],
+    ["note", "Processed cross-border flows reliably since January 2026"]
   ],
   "content": "",
-  "sig": "hex_signature..."
+  "sig": "<64-byte hex signature>"
 }

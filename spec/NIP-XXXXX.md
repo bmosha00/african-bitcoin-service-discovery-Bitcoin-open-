@@ -18,18 +18,22 @@ A parameterized replaceable event (NIP-33) where a provider advertises its payme
 
 **Required tags:**
 
-| Tag | Description | Example |
-|-----|-------------|---------|
-| `d` | Unique service identifier | `provider-a-tz-offramp` |
-| `name` | Human-readable provider name | `Provider A` |
-| `country` | ISO 3166-1 alpha-2 | `TZ` |
-| `direction` | Service direction | `off-ramp` / `on-ramp` / `both` |
-| `rail_in` | Inbound rail | `lightning` / `on-chain` / `ecash` |
-| `rail_out` | Outbound rail | `m-pesa` / `mtn-momo` / `airtel-money` / `bank` / `cash` |
-| `currency` | ISO 4217 fiat currency | `TZS` |
-| `endpoint` | API base URL | `https://api.example.com` |
-| `health` | Liveness check URL | `https://api.example.com/health` |
-| `status` | Current status | `active` / `maintenance` / `offline` |
+The five filterable fields use single-letter tags so relays index them for server-side filtering. The rest are display tags read from the fetched event.
+
+| Tag | Description | Filterable | Example |
+|-----|-------------|-----------|---------|
+| `d` | Unique service identifier | — | `provider-a-tz-offramp` |
+| `alt` | NIP-31 human description | — | `African Bitcoin payment service listing` |
+| `v` | Protocol version | — | `0.2` |
+| `c` | Country (ISO 3166-1 alpha-2) | yes | `TZ` |
+| `o` | Service direction | yes | `off-ramp` / `on-ramp` / `both` |
+| `i` | Inbound rail | yes | `lightning` / `on-chain` / `ecash` |
+| `m` | Outbound rail | yes | `m-pesa` / `mtn-momo` / `airtel-money` / `bank` / `cash` |
+| `f` | Fiat currency (ISO 4217) | yes | `TZS` |
+| `name` | Human-readable provider name | — | `Provider A` |
+| `endpoint` | API base URL | — | `https://api.example.com` |
+| `health` | Liveness check URL | — | `https://api.example.com/health` |
+| `status` | Current status | — | `active` / `maintenance` / `offline` |
 
 **Optional tags:**
 
@@ -53,8 +57,10 @@ A parameterized replaceable event where one provider vouches for another.
 
 | Tag | Description | Example |
 |-----|-------------|---------|
-| `d` | Unique attestation ID | `provider-b-vouches-provider-a` |
-| `p` | Pubkey of provider being vouched for | `npub1...` |
+| `d` | Unique attestation ID | `vouch-3bf0c63fcb934634` |
+| `alt` | NIP-31 human description | `African Bitcoin provider attestation (vouch)` |
+| `v` | Protocol version | `0.2` |
+| `p` | Hex pubkey of provider being vouched for | `3bf0c63f…459d` (64-char hex) |
 | `rating` | Trust level | `reliable` / `verified` / `trusted` |
 | `since` | Relationship start | `2026-01` |
 | `volume` | Transaction volume (general) | `low` / `medium` / `high` |
@@ -66,21 +72,36 @@ An event that withdraws trust from a provider.
 
 | Tag | Description | Example |
 |-----|-------------|---------|
-| `d` | Unique revocation ID | `revoke-provider-x` |
-| `p` | Pubkey of provider being revoked | `npub1...` |
+| `d` | Unique revocation ID | `revoke-deadbeefdeadbeef` |
+| `alt` | NIP-31 human description | `African Bitcoin provider trust revocation` |
+| `v` | Protocol version | `0.2` |
+| `p` | Hex pubkey of provider being revoked | `deadbeef…beef` (64-char hex) |
 | `action` | Action taken | `revoked` / `suspended` |
 | `reason` | Human-readable reason | `Non-delivery of mobile money payouts` |
 | `effective` | Effective date | `2026-09-15` |
 
+> All `p` tag values are lowercase 64-char hex per NIP-01. `npub…` is a display encoding only and never appears in tags.
+
 ## Query flow
 
-1. Consumer sends a REQ filter to relays
+1. Consumer sends a REQ filter to relays using single-letter tags for server-side matching:
+
+```json
+{ "kinds": [38383], "#c": ["TZ"], "#o": ["off-ramp"], "#m": ["m-pesa"], "limit": 500 }
+```
+
+The relay performs the AND match server-side, so the consumer does not download the entire kind-38383 population. This also excludes other protocols sharing kind 38383 (e.g. Mostro), since their events lack a `c` tag.
+
 2. Relay returns matching service listings
-3. Consumer fetches attestations for each result
-4. Consumer checks for revocations
+3. Consumer fetches attestations for each result (`{ "kinds": [38384], "#p": ["<hex-pubkey>"] }`)
+4. Consumer checks for revocations (`{ "kinds": [38385], "#p": ["<hex-pubkey>"] }`)
 5. Consumer ranks results by trust score, speed, and fee range
 6. Consumer pings top-ranked provider's `/health` endpoint
 7. If healthy, consumer connects to the provider's API for settlement
+
+## Content field
+
+Kind 38383 carries optional extended metadata as a JSON object in `content` (e.g. `description`, `website`, `support`), or `{}` if none. Kinds 38384 and 38385 use an empty `content` string.
 
 ## Provider-to-provider routing
 
@@ -98,6 +119,26 @@ Every provider SHOULD expose a health endpoint returning: status, uptime, averag
 | Individual provider attestation | +1 |
 | Unrecognised key attestation | 0 |
 | Active revocation | -10 |
+
+### Algorithm (deterministic)
+
+So that every client computes the same score, the algorithm is fully specified:
+
+1. Fetch all kind-38384 attestations and kind-38385 revocations whose `p` tag is the target pubkey.
+2. **Verify each event's signature.** Discard any that fail.
+3. Keep only events where the `p` tag equals the target. For attestations, discard self-vouches (attester == target).
+4. **Deduplicate by author**, keeping each author's most recent event (by `created_at`). One key counts at most once.
+5. Classify each remaining author into a tier: `ALLIANCE` if it is the alliance pubkey, else `PROVIDER` if it is a recognised provider, else `UNKNOWN`.
+6. Score = Σ attestation weights (ALLIANCE +3, PROVIDER +1, UNKNOWN 0) + Σ revocation penalties. **Revocations count only from recognised keys** (ALLIANCE or PROVIDER) at −10 each; revocations from unknown keys are ignored entirely.
+
+```
+score = (alliance_attestations × 3) + (provider_attestations × 1)
+        − (recognised_revocations × 10)
+```
+
+Suggested display class: `score ≥ 5` → trusted, `score ≥ 1` → reliable, `score ≤ 0` → risky.
+
+Only recognised keys move the score in either direction; unknown keys carry no weight, which provides Sybil resistance.
 
 ## Privacy considerations
 

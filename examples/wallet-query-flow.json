@@ -1,39 +1,26 @@
 {
-  "_comment": "Step 1: Find Tanzania M-Pesa off-ramp providers",
+  "_comment": "Step 1: Find Tanzania M-Pesa off-ramp providers (server-side single-letter tag filter)",
   "discovery_query": {
-    "kinds": [
-      38383
-    ],
-    "#country": [
-      "TZ"
-    ],
-    "#direction": [
-      "off-ramp"
-    ],
-    "#rail_out": [
-      "m-pesa"
-    ],
-    "since": 1718550000
+    "kinds": [38383],
+    "#c": ["TZ"],
+    "#o": ["off-ramp"],
+    "#m": ["m-pesa"],
+    "since": 1718550000,
+    "limit": 500
   },
-  "_comment2": "Step 2: Fetch attestations for a discovered provider",
+  "_comment2": "Step 2: Fetch attestations for a discovered provider (p tag is hex)",
   "attestation_query": {
-    "kinds": [
-      38384
-    ],
-    "#p": [
-      "npub1exampleprovidera..."
-    ]
+    "kinds": [38384],
+    "#p": ["3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d"],
+    "limit": 500
   },
   "_comment3": "Step 3: Check for revocations",
   "revocation_query": {
-    "kinds": [
-      38385
-    ],
-    "#p": [
-      "npub1exampleprovidera..."
-    ]
+    "kinds": [38385],
+    "#p": ["3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d"],
+    "limit": 500
   },
-  "_comment4": "Step 4: Ping health endpoint",
+  "_comment4": "Step 4: Ping health endpoint (https only, validated against SSRF guard)",
   "health_check": "GET https://api.example.com/health",
   "expected_response": {
     "status": "active",

@@ -7,16 +7,17 @@
       "kinds": [
         38383
       ],
-      "#country": [
+      "#c": [
         "KE"
       ],
-      "#direction": [
+      "#o": [
         "off-ramp"
       ],
-      "#rail_out": [
+      "#m": [
         "m-pesa"
       ],
-      "since": 1718550000
+      "since": 1718550000,
+      "limit": 500
     }
   },
   "step_2_result": {
@@ -35,8 +36,9 @@
         38384
       ],
       "#p": [
-        "npub1exampleproviderb..."
-      ]
+        "7e7e9c9d1f2a3b4c5d6e7f80910a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c"
+      ],
+      "limit": 500
     },
     "result": {
       "attestation_count": 5,
@@ -87,6 +89,6 @@
   "step_6_complete": {
     "_action": "Provider A pays Provider B's Lightning invoice, Provider B delivers KES to recipient",
     "status": "completed",
-    "flow": "User (TZ) → Provider A → Lightning → Provider B → M-Pesa Kenya → Recipient"
+    "flow": "User (TZ) \u2192 Provider A \u2192 Lightning \u2192 Provider B \u2192 M-Pesa Kenya \u2192 Recipient"
   }
 }

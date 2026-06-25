@@ -1,85 +1,29 @@
 {
   "kind": 38383,
-  "pubkey": "npub1exampleprovider...",
+  "pubkey": "3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d",
   "created_at": 1718640000,
   "tags": [
-    [
-      "d",
-      "provider-a-tz-offramp"
-    ],
-    [
-      "name",
-      "Provider A"
-    ],
-    [
-      "country",
-      "TZ"
-    ],
-    [
-      "direction",
-      "off-ramp"
-    ],
-    [
-      "rail_in",
-      "lightning"
-    ],
-    [
-      "rail_out",
-      "m-pesa"
-    ],
-    [
-      "currency",
-      "TZS"
-    ],
-    [
-      "network",
-      "vodacom-tz"
-    ],
-    [
-      "min_amount",
-      "2500"
-    ],
-    [
-      "max_amount",
-      "1000000"
-    ],
-    [
-      "fee_range",
-      "1.5-2.2"
-    ],
-    [
-      "speed",
-      "seconds"
-    ],
-    [
-      "endpoint",
-      "https://api.example.com"
-    ],
-    [
-      "health",
-      "https://api.example.com/health"
-    ],
-    [
-      "ttl",
-      "90000"
-    ],
-    [
-      "protocols",
-      "bolt11,nwc,lnurl"
-    ],
-    [
-      "kyc",
-      "none"
-    ],
-    [
-      "status",
-      "active"
-    ],
-    [
-      "heartbeat",
-      "daily"
-    ]
+    ["d", "provider-a-tz-offramp"],
+    ["alt", "African Bitcoin payment service listing"],
+    ["v", "0.2"],
+    ["c", "TZ"],
+    ["o", "off-ramp"],
+    ["i", "lightning"],
+    ["m", "m-pesa"],
+    ["f", "TZS"],
+    ["name", "Provider A"],
+    ["endpoint", "https://api.example.com"],
+    ["health", "https://api.example.com/health"],
+    ["status", "active"],
+    ["network", "vodacom-tz"],
+    ["min_amount", "2500"],
+    ["max_amount", "1000000"],
+    ["fee_range", "1.5-2.2"],
+    ["speed", "seconds"],
+    ["ttl", "90000"],
+    ["protocols", "bolt11,nwc,lnurl"],
+    ["kyc", "none"]
   ],
-  "content": "{}",
-  "sig": "hex_signature..."
+  "content": "{\"description\":\"Lightning to M-Pesa off-ramp\"}",
+  "sig": "<64-byte hex signature>"
 }

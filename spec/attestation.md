@@ -19,6 +19,19 @@ An attestation is a signed Nostr event (kind 38384) where one provider vouches f
 | Provider attestation (unrecognised key) | 0 | Sybil resistance |
 | Active revocation (kind 38385) | -10 | Effectively removes from results |
 
+### Deterministic algorithm
+
+Every client MUST compute scores identically:
+
+1. Fetch kind-38384 (attestations) and kind-38385 (revocations) where the `p` tag is the target.
+2. Verify each signature; discard failures.
+3. Keep events whose `p` equals the target; discard attestation self-vouches.
+4. Deduplicate by author, keeping each author's most recent event — one key counts once.
+5. Tier each author: ALLIANCE (alliance pubkey) → +3, PROVIDER (recognised) → +1, UNKNOWN → 0.
+6. `score = Σ attestation_weights − (recognised_revocations × 10)`. Revocations from unknown keys are ignored.
+
+Display class: `score ≥ 5` trusted, `≥ 1` reliable, `≤ 0` risky.
+
 ## Sybil resistance
 
 Only attestations from recognised keys carry weight. A key is "recognised" if it belongs to a known alliance member or a provider that itself has attestations from recognised keys. This creates a chain of trust rooted in known entities.

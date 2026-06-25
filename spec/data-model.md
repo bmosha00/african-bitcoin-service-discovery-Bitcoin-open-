@@ -4,30 +4,48 @@ Complete reference for all tags used in the service discovery protocol.
 
 ## Service listing tags (kind 38383)
 
+## Tag indexing (why some tags are single letters)
+
+Nostr relays only index **single-letter** tags for server-side filtering. So the five fields a consumer filters on use single-letter tags; everything else uses readable multi-letter tags and is read from the event after it is fetched.
+
+| Field | Tag | Filterable |
+|-------|-----|-----------|
+| country | `c` | yes (server-side) |
+| direction | `o` | yes (server-side) |
+| rail_in | `i` | yes (server-side) |
+| rail_out | `m` | yes (server-side) |
+| currency | `f` | yes (server-side) |
+
+All other tags below are display/metadata and are not used in relay filters.
+
 ### Required tags
 
 #### `d` — Service identifier
 Unique identifier for this service listing. Format: `{provider}-{country}-{direction}`
 
-#### `name` — Provider name
-Human-readable name of the provider.
+#### `alt` — Human description (NIP-31)
+Always `African Bitcoin payment service listing`. Lets generic Nostr clients render the event meaningfully.
 
-#### `country` — Country code
-ISO 3166-1 alpha-2 country code. Common values: `TZ`, `KE`, `NG`, `GH`, `ZA`, `UG`, `ZM`, `RW`
+#### `v` — Protocol version
+Schema version, currently `0.2`. Clients may warn or reject on unknown versions.
 
-A provider operating in multiple countries publishes separate listings per country.
+#### `c` — Country code (filterable)
+ISO 3166-1 alpha-2, uppercase. Common values: `TZ`, `KE`, `NG`, `GH`, `ZA`, `UG`, `ZM`, `RW`. A provider operating in multiple countries publishes separate listings per country.
 
-#### `direction` — Service direction
+#### `o` — Service direction (filterable)
 `off-ramp` (Bitcoin → fiat), `on-ramp` (fiat → Bitcoin), `both`
 
-#### `rail_in` — Inbound payment rail
+#### `i` — Inbound payment rail (filterable)
 `lightning`, `on-chain`, `ecash`, `lnurl`
 
-#### `rail_out` — Outbound payment rail
+#### `m` — Outbound payment rail (filterable)
 `m-pesa`, `mtn-momo`, `airtel-money`, `orange-money`, `bank`, `cash`
 
-#### `currency` — Fiat currency
-ISO 4217 currency code. Common values: `TZS`, `KES`, `NGN`, `GHS`, `ZAR`, `UGX`, `ZMW`, `RWF`
+#### `f` — Fiat currency (filterable)
+ISO 4217, uppercase. Common values: `TZS`, `KES`, `NGN`, `GHS`, `ZAR`, `UGX`, `ZMW`, `RWF`
+
+#### `name` — Provider name
+Human-readable name of the provider.
 
 #### `endpoint` — API base URL
 HTTPS URL where the provider's API is reachable.
@@ -63,6 +81,26 @@ Comma-separated: `bolt11`, `bolt12`, `nwc`, `lnurl`, `webln`, `keysend`
 
 #### `heartbeat` — Refresh strategy
 `daily`, `hourly`, `on-change`
+
+## Content field
+
+| Kind | `content` |
+|------|-----------|
+| 38383 (listing) | JSON object of extended metadata (e.g. `description`, `website`, `support`), or `{}` if none |
+| 38384 (attestation) | empty string `""` |
+| 38385 (revocation) | empty string `""` |
+
+## Attestation tags (kind 38384)
+
+Required: `d` (replaceable id), `alt` (`African Bitcoin provider attestation (vouch)`), `v` (`0.2`), `p` (target provider pubkey — **64-char hex, not npub**), `rating`.
+Optional: `since`, `volume`, `note`.
+
+## Revocation tags (kind 38385)
+
+Required: `d`, `alt` (`African Bitcoin provider trust revocation`), `v` (`0.2`), `p` (target pubkey — **64-char hex**), `action` (`revoked`), `reason`.
+Optional: `effective`.
+
+> Pubkeys in `p` tags are always lowercase 64-char hex per NIP-01. `npub…` is a display encoding only and must never appear in a tag value.
 
 ## Tag vocabulary governance
 

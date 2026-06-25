@@ -1,29 +1,16 @@
 {
   "kind": 38385,
-  "pubkey": "npub1examplealliance...",
+  "pubkey": "a11a11a11a11a11a11a11a11a11a11a11a11a11a11a11a11a11a11a11a11a11ab",
   "created_at": 1718640000,
   "tags": [
-    [
-      "d",
-      "revoke-provider-x"
-    ],
-    [
-      "p",
-      "npub1examplebadprovider..."
-    ],
-    [
-      "action",
-      "revoked"
-    ],
-    [
-      "reason",
-      "Non-delivery of mobile money payouts after 3 confirmed complaints"
-    ],
-    [
-      "effective",
-      "2026-09-15"
-    ]
+    ["d", "revoke-deadbeefdeadbeef"],
+    ["alt", "African Bitcoin provider trust revocation"],
+    ["v", "0.2"],
+    ["p", "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"],
+    ["action", "revoked"],
+    ["reason", "Non-delivery of mobile money payouts after 3 confirmed complaints"],
+    ["effective", "2026-09-15"]
   ],
   "content": "",
-  "sig": "hex_signature..."
+  "sig": "<64-byte hex signature>"
 }
