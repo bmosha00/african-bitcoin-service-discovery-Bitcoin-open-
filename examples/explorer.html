@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>African Bitcoin Service Discovery — Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0B0E14; --slate:#141A26; --slate2:#1A2230; --line:#26303F;
+    --signal:#3DD4C8; --signal-dim:#1d6b66; --value:#F7931A;
+    --text:#E8ECF4; --muted:#8B95A8; --faint:#5A6478;
+    --good:#3DD4C8; --warn:#E9B949; --bad:#E5635B; --new:#7C8BFF;
+    --r:14px; --mono:'JetBrains Mono',monospace; --disp:'Space Grotesk',sans-serif; --body:'Hanken Grotesk',sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--ink);color:var(--text);font-family:var(--body);line-height:1.5;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(1100px 500px at 78% -8%, rgba(61,212,200,.07), transparent 60%),radial-gradient(900px 460px at 8% 4%, rgba(247,147,26,.05), transparent 55%);}
+  a{color:inherit}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+  .mono{font-family:var(--mono)}
+  .muted{color:var(--muted)} .faint{color:var(--faint)}
+
+  /* header */
+  header.top{border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;background:rgba(11,14,20,.82);backdrop-filter:blur(10px)}
+  .top .wrap{display:flex;align-items:center;gap:18px;height:60px}
+  .brand{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:700;letter-spacing:-.02em}
+  .brand .dot{width:9px;height:9px;background:var(--signal);border-radius:2px;box-shadow:0 0 0 0 rgba(61,212,200,.6);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(61,212,200,.5)}70%{box-shadow:0 0 0 7px rgba(61,212,200,0)}100%{box-shadow:0 0 0 0 rgba(61,212,200,0)}}
+  .tabs{display:flex;gap:4px;margin-left:auto}
+  .tab{font-family:var(--disp);font-weight:500;font-size:14px;color:var(--muted);background:none;border:0;padding:8px 14px;border-radius:9px;cursor:pointer}
+  .tab[aria-selected=true]{color:var(--ink);background:var(--signal)}
+  .tab:hover:not([aria-selected=true]){color:var(--text);background:var(--slate)}
+  .ghbtn{font-size:13px;color:var(--muted);text-decoration:none;border:1px solid var(--line);padding:7px 11px;border-radius:9px}
+  .ghbtn:hover{color:var(--text);border-color:var(--signal-dim)}
+
+  /* hero */
+  .hero{padding:56px 0 30px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--signal)}
+  h1.title{font-family:var(--disp);font-weight:700;letter-spacing:-.03em;font-size:clamp(34px,6vw,60px);line-height:1.02;margin:14px 0 0}
+  h1.title .of{color:var(--value)}
+  .tagline{font-size:clamp(16px,2.3vw,20px);color:var(--muted);max-width:640px;margin:16px 0 0}
+  .herostats{display:flex;flex-wrap:wrap;gap:26px;margin-top:26px;font-family:var(--mono)}
+  .stat .n{font-size:26px;font-weight:700;color:var(--text)} .stat .l{font-size:12px;color:var(--faint);letter-spacing:.04em}
+  .credit{margin-top:24px;font-size:13px;color:var(--faint)}
+  .credit a{color:var(--muted);text-decoration:none;border-bottom:1px dotted var(--line)}
+  .credit a:hover{color:var(--signal)}
+
+  /* layout */
+  section[hidden]{display:none}
+  .panel{background:var(--slate);border:1px solid var(--line);border-radius:var(--r)}
+  .discover{display:grid;grid-template-columns:248px 1fr;gap:20px;padding-bottom:80px}
+  @media(max-width:780px){.discover{grid-template-columns:1fr}}
+
+  .filters{align-self:start;position:sticky;top:78px;padding:18px}
+  .filters h3{font-family:var(--disp);font-size:13px;letter-spacing:.02em;margin:0 0 14px;color:var(--muted);text-transform:uppercase}
+  .fld{margin-bottom:16px}
+  .fld label{display:block;font-size:12px;color:var(--faint);margin-bottom:6px;font-family:var(--mono);letter-spacing:.03em}
+  select,input,textarea{width:100%;background:var(--ink);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-family:var(--body);font-size:14px}
+  select:focus,input:focus,textarea:focus{outline:none;border-color:var(--signal-dim)}
+  .seg{display:flex;background:var(--ink);border:1px solid var(--line);border-radius:9px;padding:3px}
+  .seg button{flex:1;background:none;border:0;color:var(--muted);font-family:var(--mono);font-size:12px;padding:7px 4px;border-radius:7px;cursor:pointer}
+  .seg button[aria-pressed=true]{background:var(--slate2);color:var(--signal)}
+  .tagkey{font-family:var(--mono);font-size:11px;color:var(--signal)}
+  .runrow{display:flex;gap:8px;align-items:center;margin-top:6px}
+  .btn{font-family:var(--disp);font-weight:600;border:0;border-radius:9px;cursor:pointer;padding:10px 14px;font-size:14px}
+  .btn.primary{background:var(--signal);color:var(--ink)} .btn.primary:hover{filter:brightness(1.08)}
+  .btn.value{background:var(--value);color:#221603} .btn.value:hover{filter:brightness(1.06)}
+  .btn.ghost{background:var(--slate2);color:var(--text);border:1px solid var(--line)} .btn.ghost:hover{border-color:var(--signal-dim)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  /* results */
+  .reshead{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .reshead .q{font-family:var(--mono);font-size:12px;color:var(--faint)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px}
+  .card{padding:16px;cursor:pointer;transition:border-color .15s,transform .15s}
+  .card:hover{border-color:var(--signal-dim);transform:translateY(-2px)}
+  .card .row1{display:flex;align-items:center;gap:10px}
+  .flag{font-size:20px;line-height:1}
+  .pname{font-family:var(--disp);font-weight:600;font-size:17px;letter-spacing:-.01em}
+  .rail{margin:12px 0 10px;font-family:var(--mono);font-size:13px;color:var(--text);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .rail .arrow{color:var(--signal)}
+  .pill{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:6px;background:var(--slate2);color:var(--muted);border:1px solid var(--line)}
+  .meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .cardfoot{display:flex;align-items:center;gap:8px;justify-content:space-between;border-top:1px solid var(--line);padding-top:12px}
+  .health{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .hdot{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+  .hdot.good{background:var(--good);box-shadow:0 0 8px var(--good)} .hdot.warn{background:var(--warn)} .hdot.bad{background:var(--bad)}
+  .hdot.ping{animation:pulse 1.6s infinite}
+
+  /* trust badge */
+  .badge{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:6px;display:inline-flex;gap:6px;align-items:center}
+  .badge.trusted{background:rgba(61,212,200,.14);color:var(--signal);border:1px solid var(--signal-dim)}
+  .badge.reliable{background:rgba(124,139,255,.14);color:var(--new);border:1px solid #3a3f6b}
+  .badge.new{background:var(--slate2);color:var(--muted);border:1px solid var(--line)}
+  .badge.risky{background:rgba(229,99,91,.14);color:var(--bad);border:1px solid #6b3633}
+  .badge .sc{opacity:.8}
+
+  .empty{padding:48px 20px;text-align:center;color:var(--muted)}
+  .empty .big{font-family:var(--disp);font-size:18px;color:var(--text);margin-bottom:8px}
+  .skel{height:150px;border-radius:var(--r);background:linear-gradient(100deg,var(--slate) 30%,var(--slate2) 50%,var(--slate) 70%);background-size:200% 100%;animation:sh 1.3s infinite}
+  @keyframes sh{to{background-position:-200% 0}}
+
+  /* publish */
+  .pubwrap{max-width:640px;padding-bottom:80px}
+  .pubcard{padding:22px}
+  .idline{font-family:var(--mono);font-size:12px;color:var(--muted);word-break:break-all}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:560px){.grid2{grid-template-columns:1fr}}
+  .note{font-size:13px;color:var(--faint);margin-top:10px}
+  .warnbox{background:rgba(233,185,73,.08);border:1px solid #6b5a2a;border-radius:10px;padding:10px 12px;font-size:13px;color:#e9cd8f;margin-top:12px}
+
+  /* map */
+  .mapwrap{padding-bottom:80px}
+  .mapcard{padding:8px;position:relative;overflow:hidden}
+  .mapsvg{width:100%;height:auto;display:block}
+  .node{cursor:pointer}
+  .node circle.core{transition:r .2s,fill .2s}
+  .node text{font-family:var(--mono);font-size:3px;fill:var(--muted)}
+  .node:hover circle.core{fill:var(--signal)}
+  .node:hover text{fill:var(--text)}
+  .maplegend{position:absolute;right:14px;bottom:12px;font-family:var(--mono);font-size:11px;color:var(--faint);text-align:right}
+
+  /* detail overlay */
+  .scrim{position:fixed;inset:0;background:rgba(5,7,11,.7);backdrop-filter:blur(3px);z-index:40;display:flex;justify-content:flex-end}
+  .sheet{width:min(560px,100%);height:100%;background:var(--slate);border-left:1px solid var(--line);overflow-y:auto;padding:22px}
+  .sheet .x{float:right;background:var(--slate2);border:1px solid var(--line);color:var(--muted);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:18px}
+  .kv{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;font-size:13px;margin:14px 0}
+  .kv dt{color:var(--faint);font-family:var(--mono);font-size:12px} .kv dd{margin:0;word-break:break-all}
+  .sectitle{font-family:var(--disp);font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:22px 0 10px;border-top:1px solid var(--line);padding-top:16px}
+  .att{border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin-bottom:9px;font-size:13px}
+  .att .who{font-family:var(--mono);font-size:11px;color:var(--signal)}
+  .scorebreak{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .chip{font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:6px;background:var(--ink);border:1px solid var(--line);color:var(--muted)}
+
+  /* toast */
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;background:var(--slate2);border:1px solid var(--signal-dim);color:var(--text);padding:11px 18px;border-radius:10px;font-size:14px;z-index:60;transition:.25s;pointer-events:none;max-width:90vw}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  footer.foot{border-top:1px solid var(--line);padding:26px 0;color:var(--faint);font-size:13px}
+  footer.foot a{color:var(--muted);text-decoration:none}
+  footer.foot a:hover{color:var(--signal)}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="brand"><span class="dot"></span> afri·discovery</div>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="discover" aria-selected="true">Discover</button>
+    <button class="tab" role="tab" data-tab="publish" aria-selected="false">Publish</button>
+    <button class="tab" role="tab" data-tab="map" aria-selected="false">Map</button>
+  </nav>
+  <a class="ghbtn" id="repoLink" href="#" target="_blank" rel="noopener">GitHub ↗</a>
+</div></header>
+
+<!-- HERO -->
+<div class="wrap hero">
+  <div class="eyebrow">DNS for payments · live on Nostr</div>
+  <h1 class="title">Find who moves Bitcoin<br>to mobile money <span class="of">across Africa</span></h1>
+  <p class="tagline">An open directory of off-ramps and on-ramps. Any provider can publish a signed listing; any wallet can discover it — no API keys, no gatekeeper. This page queries public relays live.</p>
+  <div class="herostats" id="heroStats">
+    <div class="stat"><div class="n" id="hsProviders">—</div><div class="l">PROVIDERS</div></div>
+    <div class="stat"><div class="n" id="hsCountries">—</div><div class="l">COUNTRIES</div></div>
+    <div class="stat"><div class="n" id="hsRelays">—</div><div class="l">RELAYS</div></div>
+    <div class="stat"><div class="n mono" style="color:var(--signal)">v0.2</div><div class="l">SCHEMA</div></div>
+  </div>
+  <div class="credit">Vibed with <a id="shakespeare" href="#" target="_blank" rel="noopener">Shakespeare</a> · open protocol, MIT licensed</div>
+</div>
+
+<!-- DISCOVER -->
+<section id="discover" class="wrap"><div class="discover">
+  <aside class="filters panel">
+    <h3>Filter</h3>
+    <div class="fld"><label>Country <span class="tagkey">#c</span></label>
+      <select id="fCountry"><option value="">Any country</option></select></div>
+    <div class="fld"><label>Direction <span class="tagkey">#o</span></label>
+      <div class="seg" id="fDir">
+        <button data-v="" aria-pressed="true">Any</button>
+        <button data-v="off-ramp" aria-pressed="false">Off-ramp</button>
+        <button data-v="on-ramp" aria-pressed="false">On-ramp</button>
+      </div></div>
+    <div class="fld"><label>Pays out to <span class="tagkey">#m</span></label>
+      <select id="fRail"><option value="">Any rail</option>
+        <option value="m-pesa">M-Pesa</option><option value="mtn-momo">MTN MoMo</option>
+        <option value="airtel-money">Airtel Money</option><option value="orange-money">Orange Money</option>
+        <option value="bank">Bank</option><option value="cash">Cash</option></select></div>
+    <div class="runrow">
+      <button class="btn primary" id="runBtn" style="flex:1">Discover</button>
+      <button class="btn ghost" id="clearBtn" title="Reset">Reset</button>
+    </div>
+    <div class="note" id="filterEcho"></div>
+  </aside>
+  <div>
+    <div class="reshead"><strong id="resCount">Searching…</strong><span class="q mono" id="resQuery"></span></div>
+    <div class="grid" id="results"></div>
+  </div>
+</div></section>
+
+<!-- PUBLISH -->
+<section id="publish" class="wrap" hidden><div class="pubwrap">
+  <div class="reshead"><strong>Publish a service listing</strong></div>
+  <div class="panel pubcard">
+    <div id="signerRow">
+      <button class="btn ghost" id="connectNip07">Connect Nostr extension</button>
+      <button class="btn ghost" id="genKey">Use a throwaway test key</button>
+      <div class="note">Listings are signed. The extension (NIP-07) keeps your key in your control — this page never sees it. The test key is generated in your browser for demo listings only.</div>
+    </div>
+    <div id="signedAs" hidden>
+      <div class="idline">Signing as <span class="mono" style="color:var(--signal)" id="myPub"></span> <span id="keyKind" class="pill"></span></div>
+      <div class="warnbox" id="testWarn" hidden>This is a throwaway demo key generated in your browser. Don't use it for anything real — it isn't saved anywhere.</div>
+      <div style="height:14px"></div>
+      <div class="grid2">
+        <div class="fld"><label>Provider name</label><input id="pName" placeholder="Provider A" value="Provider A"></div>
+        <div class="fld"><label>Service id (d-tag)</label><input id="pId" placeholder="provider-a-tz-offramp" value="provider-a-tz-offramp"></div>
+        <div class="fld"><label>Country (ISO-2) <span class="tagkey">#c</span></label><input id="pCountry" value="TZ" maxlength="2"></div>
+        <div class="fld"><label>Currency (ISO-3) <span class="tagkey">#f</span></label><input id="pCurrency" value="TZS" maxlength="3"></div>
+        <div class="fld"><label>Direction <span class="tagkey">#o</span></label>
+          <select id="pDir"><option>off-ramp</option><option>on-ramp</option><option>both</option></select></div>
+        <div class="fld"><label>Rail in <span class="tagkey">#i</span></label>
+          <select id="pRailIn"><option>lightning</option><option>on-chain</option><option>ecash</option></select></div>
+        <div class="fld"><label>Rail out <span class="tagkey">#m</span></label>
+          <select id="pRailOut"><option>m-pesa</option><option>mtn-momo</option><option>airtel-money</option><option>orange-money</option><option>bank</option><option>cash</option></select></div>
+        <div class="fld"><label>Fee range %</label><input id="pFee" value="1.5-2.2"></div>
+        <div class="fld"><label>Endpoint (https)</label><input id="pEndpoint" value="https://api.example.com"></div>
+        <div class="fld"><label>Health (https)</label><input id="pHealth" value="https://api.example.com/health"></div>
+      </div>
+      <button class="btn value" id="publishBtn">Publish listing</button>
+      <div class="note" id="pubEcho"></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- MAP -->
+<section id="map" class="wrap" hidden><div class="mapwrap">
+  <div class="reshead"><strong>Coverage map</strong><span class="q mono">providers by country · click to filter</span></div>
+  <div class="panel mapcard">
+    <svg class="mapsvg" id="mapSvg" viewBox="0 0 100 108" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="maplegend">node size = provider count</div>
+  </div>
+</div></section>
+
+<footer class="foot"><div class="wrap">
+  Discovery finds. Attestation vouches. Settlement is yours. ·
+  <a id="footRepo" href="#" target="_blank" rel="noopener">source</a>
+</div></footer>
+
+<div id="toast"></div>
+
+<script type="module">
+import * as NT from 'https://esm.sh/nostr-tools@2.10.4';
+
+/* ---- protocol constants (must match lib v0.2) ---- */
+const REPO = 'https://github.com/bmosha00/african-bitcoin-service-discovery-Bitcoin-open-';
+const RELAYS = ['wss://relay.damus.io','wss://relay.nostr.band','wss://nos.lol'];
+const KIND = { LISTING:38383, ATTEST:38384, REVOKE:38385 };
+const T = { country:'c', direction:'o', rail_in:'i', rail_out:'m', currency:'f' };
+const ALLIANCE_PUBKEY = null; // set when the alliance anchor key exists
+const W = { ALLIANCE:3, PROVIDER:1, UNKNOWN:0, REVOCATION:-10 };
+const COUNTRY = { TZ:'Tanzania',KE:'Kenya',NG:'Nigeria',GH:'Ghana',ZA:'South Africa',UG:'Uganda',
+  ZM:'Zambia',RW:'Rwanda',ET:'Ethiopia',SN:'Senegal',EG:'Egypt',CI:"Côte d'Ivoire",CM:'Cameroon',MW:'Malawi' };
+
+const pool = new NT.SimplePool();
+const $ = s => document.querySelector(s);
+const tagsOf = ev => { const o={}; for(const t of ev.tags){ if(!(t[0] in o)) o[t[0]]=t[1]; } return o; };
+const flag = cc => (cc&&cc.length===2) ? String.fromCodePoint(...[...cc.toUpperCase()].map(c=>0x1F1E6+c.charCodeAt(0)-65)) : '🌍';
+const short = pk => pk ? pk.slice(0,8)+'…'+pk.slice(-4) : '';
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2600); }
+
+$('#repoLink').href = REPO; $('#footRepo').href = REPO; $('#shakespeare').href = REPO;
+
+/* ---- relay helpers ---- */
+async function q(filter){ try{ return await pool.querySync(RELAYS, filter); }catch(e){ console.warn(e); return []; } }
+
+function parseListing(ev){
+  const t = tagsOf(ev);
+  return { pubkey:ev.pubkey, eventId:ev.id, created:ev.created_at, dtag:t.d, version:t.v||null,
+    name:t.name||'(unnamed)', country:t[T.country]||'', direction:t[T.direction]||'', rail_in:t[T.rail_in]||'',
+    rail_out:t[T.rail_out]||'', currency:t[T.currency]||'', endpoint:t.endpoint||'', health:t.health||'',
+    status:t.status||'', fee:t.fee_range||null, speed:t.speed||null, min:t.min_amount||null, max:t.max_amount||null,
+    network:t.network||null, kyc:t.kyc||null, protocols:t.protocols||null };
+}
+const isOurs = ev => ev.tags.some(t=>t[0]===T.country) && ev.tags.some(t=>t[0]==='name');
+
+async function fetchListings(filters={}){
+  const f = { kinds:[KIND.LISTING], limit:500 };
+  if(filters.country) f['#'+T.country]=[filters.country.toUpperCase()];
+  if(filters.direction) f['#'+T.direction]=[filters.direction];
+  if(filters.rail_out) f['#'+T.rail_out]=[filters.rail_out];
+  const evs = await q(f);
+  const seen = new Set(); const out=[];
+  evs.filter(isOurs).filter(ev=>{ try{return NT.verifyEvent(ev)}catch{return false} })
+     .sort((a,b)=>b.created_at-a.created_at)
+     .forEach(ev=>{ const k=ev.pubkey+':'+(tagsOf(ev).d||''); if(seen.has(k))return; seen.add(k); out.push(parseListing(ev)); });
+  return out;
+}
+
+let KNOWN = new Set(); // pubkeys that have a listing → recognised providers (web-of-trust bootstrap)
+async function refreshKnown(){ const all = await fetchListings({}); KNOWN = new Set(all.map(p=>p.pubkey)); return all; }
+
+async function scoreProvider(pubkey){
+  const [atts, revs] = await Promise.all([
+    q({ kinds:[KIND.ATTEST], '#p':[pubkey], limit:500 }),
+    q({ kinds:[KIND.REVOKE], '#p':[pubkey], limit:500 })
+  ]);
+  const dedupe = (evs, want) => {
+    const m = new Map();
+    evs.filter(e=>{try{return NT.verifyEvent(e)}catch{return false}})
+       .filter(e=>tagsOf(e).p===pubkey && e.pubkey!==pubkey && (!want || tagsOf(e).action===want))
+       .forEach(e=>{ const ex=m.get(e.pubkey); if(!ex||e.created_at>ex.created_at) m.set(e.pubkey,e); });
+    return [...m.values()];
+  };
+  const A = dedupe(atts), R = dedupe(revs,'revoked');
+  const tier = pk => (ALLIANCE_PUBKEY&&pk===ALLIANCE_PUBKEY)?'ALLIANCE':(KNOWN.has(pk)?'PROVIDER':'UNKNOWN');
+  const bd = {ALLIANCE:0,PROVIDER:0,UNKNOWN:0,REVOCATION:0}; let score=0;
+  for(const e of A){ const ti=tier(e.pubkey); bd[ti]++; score+=W[ti]; }
+  for(const e of R){ const ti=tier(e.pubkey); if(ti==='ALLIANCE'||ti==='PROVIDER'){ bd.REVOCATION++; score+=W.REVOCATION; } }
+  return { score, attCount:A.length, revCount:bd.REVOCATION, breakdown:bd,
+           attestations:A.map(e=>({by:e.pubkey,...tagsOf(e)})), revocations:R.map(e=>({by:e.pubkey,...tagsOf(e)})) };
+}
+function badgeFor(s){
+  if(s.revCount>0 || s.score<0) return {cls:'risky',label:'Risky'};
+  if(s.score>=5) return {cls:'trusted',label:'Trusted'};
+  if(s.score>=1) return {cls:'reliable',label:'Reliable'};
+  return {cls:'new',label:'New'};
+}
+
+/* ---- health ping (https-only, best-effort; CORS may block reads) ---- */
+async function pingHealth(url){
+  try{ const u=new URL(url); if(u.protocol!=='https:') return {state:'warn',text:'no https'}; }
+  catch{ return {state:'warn',text:'no url'}; }
+  try{
+    const c=new AbortController(); const tm=setTimeout(()=>c.abort(),4000);
+    const r=await fetch(url,{signal:c.signal,headers:{Accept:'application/json'}}); clearTimeout(tm);
+    if(!r.ok) return {state:'bad',text:'down'};
+    const d=await r.json().catch(()=>null);
+    if(d&&d.status==='active') return {state:'good',text:'live'+(d.avg_speed_seconds?` · ${d.avg_speed_seconds}s`:'')};
+    if(d&&d.status) return {state:'warn',text:d.status};
+    return {state:'good',text:'live'};
+  }catch{ return {state:'warn',text:'unverified'}; } // CORS / network — not necessarily down
+}
+
+/* ---- rendering ---- */
+const railLabel = r => ({'m-pesa':'M-Pesa','mtn-momo':'MTN MoMo','airtel-money':'Airtel Money','orange-money':'Orange Money','lightning':'Lightning','on-chain':'On-chain','ecash':'Ecash','bank':'Bank','cash':'Cash'}[r]||r||'—');
+
+function cardHTML(p, idx){
+  return `<article class="card panel" data-idx="${idx}">
+    <div class="row1"><span class="flag">${flag(p.country)}</span>
+      <span class="pname">${esc(p.name)}</span>
+      <span class="badge new" data-badge style="margin-left:auto">…</span></div>
+    <div class="rail">${railLabel(p.rail_in)} <span class="arrow">→</span> ${railLabel(p.rail_out)}</div>
+    <div class="meta">
+      <span class="pill">${esc(COUNTRY[p.country]||p.country||'—')}</span>
+      <span class="pill">${esc(p.direction||'—')}</span>
+      ${p.fee?`<span class="pill">${esc(p.fee)}%</span>`:''}
+      ${p.speed?`<span class="pill">${esc(p.speed)}</span>`:''}
+      ${p.kyc?`<span class="pill">kyc:${esc(p.kyc)}</span>`:''}
+    </div>
+    <div class="cardfoot">
+      <span class="health"><span class="hdot ping" data-hdot></span><span data-htext>pinging…</span></span>
+      <button class="btn value" data-send style="padding:7px 12px;font-size:13px">Send</button>
+    </div>
+  </article>`;
+}
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+let CURRENT = []; // current results
+
+async function runDiscover(){
+  const filters = readFilters();
+  $('#resQuery').textContent = JSON.stringify(buildEcho(filters));
+  $('#filterEcho').innerHTML = `relay filter → <span class="mono" style="color:var(--signal)">${esc(JSON.stringify(buildEcho(filters)))}</span>`;
+  const res = $('#results'); $('#resCount').textContent='Searching…';
+  res.innerHTML = Array.from({length:3}).map(()=>'<div class="skel"></div>').join('');
+  if(KNOWN.size===0) await refreshKnown();
+  const list = await fetchListings(filters);
+  CURRENT = list;
+  $('#resCount').textContent = list.length ? `${list.length} provider${list.length>1?'s':''}` : 'No providers';
+  if(!list.length){
+    res.innerHTML = `<div class="empty panel" style="grid-column:1/-1"><div class="big">Nothing here yet</div>
+      No listings match this filter on the connected relays. Try “Any”, or publish the first one.</div>`;
+    return;
+  }
+  res.innerHTML = list.map((p,i)=>cardHTML(p,i)).join('');
+  res.querySelectorAll('.card').forEach(card=>{
+    const i=+card.dataset.idx, p=list[i];
+    card.addEventListener('click',e=>{ if(e.target.closest('[data-send]'))return; openDetail(p); });
+    card.querySelector('[data-send]').addEventListener('click',()=>sendModal(p));
+    // async health
+    pingHealth(p.health).then(h=>{ const d=card.querySelector('[data-hdot]'),x=card.querySelector('[data-htext]');
+      d.classList.remove('ping','good','warn','bad'); d.classList.add(h.state); x.textContent=h.text; });
+    // async trust
+    scoreProvider(p.pubkey).then(s=>{ const b=badgeFor(s); const el=card.querySelector('[data-badge]');
+      el.className='badge '+b.cls; el.innerHTML=`${b.label} <span class="sc">${s.score>0?'+':''}${s.score}</span>`;
+      p._score=s; });
+  });
+}
+
+function readFilters(){
+  return { country:$('#fCountry').value, direction:$('#fDir').querySelector('[aria-pressed=true]').dataset.v, rail_out:$('#fRail').value };
+}
+function buildEcho(f){ const o={kinds:[38383]}; if(f.country)o['#c']=[f.country.toUpperCase()]; if(f.direction)o['#o']=[f.direction]; if(f.rail_out)o['#m']=[f.rail_out]; o.limit=500; return o; }
+
+/* ---- detail sheet (with naddr routing) ---- */
+function naddrOf(p){ try{ return NT.nip19.naddrEncode({identifier:p.dtag||'',pubkey:p.pubkey,kind:KIND.LISTING,relays:RELAYS}); }catch{ return ''; } }
+
+async function openDetail(p){
+  location.hash = naddrOf(p);
+  const scrim=document.createElement('div'); scrim.className='scrim';
+  scrim.innerHTML=`<div class="sheet"><button class="x" aria-label="Close">×</button>
+    <div class="row1"><span class="flag" style="font-size:26px">${flag(p.country)}</span>
+      <div><div class="pname" style="font-size:22px">${esc(p.name)}</div>
+      <div class="mono faint" style="font-size:12px">${esc(COUNTRY[p.country]||p.country)} · ${esc(p.direction)}</div></div>
+      <span class="badge new" id="dBadge" style="margin-left:auto">scoring…</span></div>
+    <dl class="kv">
+      <dt>rail</dt><dd>${railLabel(p.rail_in)} → ${railLabel(p.rail_out)}</dd>
+      <dt>currency</dt><dd>${esc(p.currency||'—')}</dd>
+      <dt>fee range</dt><dd>${esc(p.fee||'—')}${p.fee?'%':''}</dd>
+      <dt>limits</dt><dd>${p.min||p.max?`${esc(p.min||'?')} – ${esc(p.max||'?')} ${esc(p.currency)}`:'—'}</dd>
+      <dt>speed</dt><dd>${esc(p.speed||'—')}</dd>
+      <dt>network</dt><dd>${esc(p.network||'—')}</dd>
+      <dt>kyc</dt><dd>${esc(p.kyc||'—')}</dd>
+      <dt>endpoint</dt><dd>${esc(p.endpoint||'—')}</dd>
+      <dt>health</dt><dd id="dHealth">checking…</dd>
+      <dt>version</dt><dd class="mono">${esc(p.version||'—')}</dd>
+      <dt>provider</dt><dd class="mono">${esc(p.pubkey)}</dd>
+      <dt>naddr</dt><dd class="mono" style="color:var(--signal)">${esc(naddrOf(p).slice(0,32))}…</dd>
+    </dl>
+    <div class="sectitle">Trust</div><div id="dTrust" class="muted" style="font-size:13px">computing web of trust…</div>
+    <div class="sectitle">Attestations</div><div id="dAtt" class="muted" style="font-size:13px">loading…</div>
+    <div class="sectitle">Revocations</div><div id="dRev" class="muted" style="font-size:13px">loading…</div>
+  </div>`;
+  document.body.appendChild(scrim);
+  const close=()=>{ scrim.remove(); if(location.hash) history.replaceState(null,'',location.pathname+location.search); };
+  scrim.addEventListener('click',e=>{ if(e.target===scrim) close(); });
+  scrim.querySelector('.x').addEventListener('click',close);
+  pingHealth(p.health).then(h=>{ const el=scrim.querySelector('#dHealth'); if(el) el.textContent=h.text; });
+  const s = await scoreProvider(p.pubkey);
+  const b = badgeFor(s); const bd=s.breakdown;
+  const badgeEl=scrim.querySelector('#dBadge'); if(badgeEl){ badgeEl.className='badge '+b.cls; badgeEl.innerHTML=`${b.label} <span class="sc">${s.score>0?'+':''}${s.score}</span>`; }
+  const trust=scrim.querySelector('#dTrust');
+  if(trust) trust.innerHTML = `<div class="mono" style="font-size:22px;color:var(--text)">${s.score>0?'+':''}${s.score}</div>
+    <div class="scorebreak">
+      <span class="chip">alliance ×${bd.ALLIANCE} = +${bd.ALLIANCE*3}</span>
+      <span class="chip">provider ×${bd.PROVIDER} = +${bd.PROVIDER}</span>
+      <span class="chip">unknown ×${bd.UNKNOWN} = 0</span>
+      <span class="chip">revocations ×${bd.REVOCATION} = ${bd.REVOCATION*-10}</span>
+    </div>`;
+  const attEl=scrim.querySelector('#dAtt');
+  if(attEl) attEl.innerHTML = s.attestations.length ? s.attestations.map(a=>`<div class="att">
+      <div class="who">${KNOWN.has(a.by)?'★ recognised provider':'unrecognised key'} · ${short(a.by)}</div>
+      <div>rating: ${esc(a.rating||'—')}${a.volume?` · volume ${esc(a.volume)}`:''}${a.since?` · since ${esc(a.since)}`:''}</div>
+      ${a.note?`<div class="muted" style="margin-top:4px">“${esc(a.note)}”</div>`:''}</div>`).join('')
+    : '<span class="faint">No attestations yet.</span>';
+  const revEl=scrim.querySelector('#dRev');
+  if(revEl) revEl.innerHTML = s.revocations.length ? s.revocations.map(r=>`<div class="att" style="border-color:#6b3633">
+      <div class="who" style="color:var(--bad)">${short(r.by)}</div><div>${esc(r.reason||'revoked')}</div></div>`).join('')
+    : '<span class="faint">No revocations.</span>';
+}
+
+function sendModal(p){
+  const scrim=document.createElement('div'); scrim.className='scrim';
+  scrim.innerHTML=`<div class="sheet" style="width:min(460px,100%)"><button class="x">×</button>
+    <div class="pname" style="font-size:20px;margin-bottom:6px">Send via ${esc(p.name)}</div>
+    <p class="muted" style="font-size:14px">This is where your wallet hands off to <span class="mono" style="color:var(--signal)">${esc(p.endpoint||'the provider')}</span> to settle to ${railLabel(p.rail_out)}.</p>
+    <p class="muted" style="font-size:14px">Discovery's job ends here — it introduced you to a provider, verified its signature, ranked it by trust and checked it's alive. The actual payment moves over the provider's own settlement API. <strong style="color:var(--text)">Settlement is yours.</strong></p>
+    <button class="btn ghost" id="closeSend" style="margin-top:10px">Got it</button></div>`;
+  document.body.appendChild(scrim);
+  const close=()=>scrim.remove();
+  scrim.addEventListener('click',e=>{ if(e.target===scrim)close(); });
+  scrim.querySelector('.x').onclick=close; scrim.querySelector('#closeSend').onclick=close;
+}
+
+/* ---- publish ---- */
+let signer=null; // {pubkey, sign(evt)->signedEvent, kind}
+async function useNip07(){
+  if(!window.nostr){ toast('No Nostr extension found (NIP-07).'); return; }
+  try{ const pk=await window.nostr.getPublicKey();
+    signer={ pubkey:pk, kind:'extension', sign:evt=>window.nostr.signEvent(evt) };
+    onSigner(false);
+  }catch{ toast('Extension connection cancelled.'); }
+}
+function useTestKey(){
+  const sk=NT.generateSecretKey(); const pk=NT.getPublicKey(sk);
+  signer={ pubkey:pk, kind:'test', sign:evt=>NT.finalizeEvent(evt, sk) };
+  onSigner(true);
+}
+function onSigner(isTest){
+  $('#signerRow').hidden=true; $('#signedAs').hidden=false;
+  $('#myPub').textContent=short(signer.pubkey); $('#myPub').title=signer.pubkey;
+  $('#keyKind').textContent=signer.kind; $('#testWarn').hidden=!isTest;
+}
+async function doPublish(){
+  if(!signer) return;
+  const v=id=>$('#'+id).value.trim();
+  const req=['pName','pId','pCountry','pCurrency','pEndpoint','pHealth'];
+  for(const r of req){ if(!v(r)){ toast('Fill in '+($('#'+r).previousElementSibling.textContent.split(' ')[0]||'fields')); return; } }
+  const now=Math.floor(Date.now()/1000);
+  const tmpl={ kind:KIND.LISTING, created_at:now, content:'{}', tags:[
+    ['d',v('pId')], ['alt','African Bitcoin payment service listing'], ['v','0.2'],
+    [T.country, v('pCountry').toUpperCase()], [T.direction, $('#pDir').value],
+    [T.rail_in, $('#pRailIn').value], [T.rail_out, $('#pRailOut').value],
+    [T.currency, v('pCurrency').toUpperCase()],
+    ['name', v('pName')], ['endpoint', v('pEndpoint')], ['health', v('pHealth')], ['status','active'],
+    ['fee_range', v('pFee')||''], ['speed','seconds'], ['ttl','90000'], ['kyc','none']
+  ].filter(t=>t[1]!=='') };
+  $('#publishBtn').disabled=true; $('#pubEcho').textContent='Signing…';
+  try{
+    const signed=await signer.sign(tmpl);
+    $('#pubEcho').textContent='Publishing to relays…';
+    await Promise.any(pool.publish(RELAYS, signed));
+    toast('Published. Switch to Discover to see it.');
+    $('#pubEcho').innerHTML=`Published <span class="mono" style="color:var(--signal)">${signed.id.slice(0,16)}…</span>`;
+    KNOWN.add(signer.pubkey);
+    setTimeout(()=>{ switchTab('discover'); runDiscover(); }, 700);
+  }catch(e){ $('#pubEcho').textContent='Publish failed: '+(e.message||e); }
+  finally{ $('#publishBtn').disabled=false; }
+}
+
+/* ---- map ---- */
+const MAPPOS = { // rough normalized positions on an Africa-ish layout
+  EG:[64,16],ET:[74,44],KE:[72,55],TZ:[69,64],UG:[64,52],RW:[61,57],ZM:[58,72],MW:[67,73],
+  ZA:[57,96],NG:[40,46],GH:[30,48],CI:[25,47],SN:[12,36],CM:[46,52] };
+async function renderMap(){
+  const all = KNOWN.size? await fetchListings({}) : await refreshKnown();
+  const counts={}; all.forEach(p=>{ if(p.country) counts[p.country]=(counts[p.country]||0)+1; });
+  const svg=$('#mapSvg');
+  // faint corridor lines between active countries
+  const active=Object.keys(MAPPOS).filter(c=>counts[c]);
+  let lines='';
+  for(let i=0;i<active.length;i++)for(let j=i+1;j<active.length;j++){
+    const a=MAPPOS[active[i]],b=MAPPOS[active[j]];
+    lines+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#26303F" stroke-width="0.3"/>`;
+  }
+  const nodes=Object.entries(MAPPOS).map(([cc,[x,y]])=>{
+    const n=counts[cc]||0; const r=n?Math.min(2+n*1.2,6):1.3;
+    const fill=n?'var(--signal)':'#2a3344'; const op=n?1:.5;
+    return `<g class="node" data-cc="${cc}" opacity="${op}">
+      <circle class="core" cx="${x}" cy="${y}" r="${r}" fill="${fill}"/>
+      ${n?`<circle cx="${x}" cy="${y}" r="${r+2}" fill="none" stroke="var(--signal-dim)" stroke-width="0.3"/>`:''}
+      <text x="${x}" y="${y-r-1.4}" text-anchor="middle">${cc}${n?` ·${n}`:''}</text></g>`;
+  }).join('');
+  svg.innerHTML = `<rect x="0" y="0" width="100" height="108" fill="transparent"/>${lines}${nodes}`;
+  svg.querySelectorAll('.node').forEach(g=>g.addEventListener('click',()=>{
+    const cc=g.dataset.cc; if(!counts[cc]){ toast('No providers in '+(COUNTRY[cc]||cc)+' yet'); return; }
+    $('#fCountry').value=cc; switchTab('discover'); runDiscover();
+  }));
+}
+
+/* ---- tabs / routing ---- */
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected', String(t.dataset.tab===name)));
+  ['discover','publish','map'].forEach(s=>$('#'+s).hidden = (s!==name));
+  if(name==='map') renderMap();
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
+$('#fDir').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+  $('#fDir').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));
+  b.setAttribute('aria-pressed','true');
+}));
+$('#runBtn').addEventListener('click',runDiscover);
+$('#clearBtn').addEventListener('click',()=>{ $('#fCountry').value=''; $('#fRail').value='';
+  $('#fDir').querySelectorAll('button').forEach((x,i)=>x.setAttribute('aria-pressed',String(i===0))); runDiscover(); });
+$('#connectNip07').addEventListener('click',useNip07);
+$('#genKey').addEventListener('click',useTestKey);
+$('#publishBtn').addEventListener('click',doPublish);
+
+/* ---- boot ---- */
+async function boot(){
+  $('#hsRelays').textContent = RELAYS.length;
+  const all = await refreshKnown();
+  // populate country dropdown from live data + known set
+  const ccs = [...new Set(all.map(p=>p.country).filter(Boolean))].sort();
+  const sel=$('#fCountry');
+  ccs.forEach(cc=>{ const o=document.createElement('option'); o.value=cc; o.textContent=`${flag(cc)} ${COUNTRY[cc]||cc}`; sel.appendChild(o); });
+  $('#hsProviders').textContent = all.length;
+  $('#hsCountries').textContent = ccs.length;
+  // naddr deep-link?
+  if(location.hash.startsWith('#naddr1')){
+    try{ const {data}=NT.nip19.decode(location.hash.slice(1));
+      const ev=(await q({kinds:[data.kind],authors:[data.pubkey],'#d':[data.identifier],limit:1}))[0];
+      if(ev) openDetail(parseListing(ev));
+    }catch{}
+  }
+  runDiscover();
+}
+boot();
+</script>
+</body>
+</html>
